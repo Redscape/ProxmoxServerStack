@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:2.4
+    container_name: traefik
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik.toml:/etc/traefik/traefik.toml:ro"
+      - "./traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
+      - "./acme.json:/var/run/acme.json"
+    networks:
+      - traefik_lan
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=http
+      - traefik.http.routers.http-catchall.middlewares=redirect-to-https
+      - traefik.http.middlewares.auth.basicauth.users=traefik:$$apr1$$vwxvGVlE$$j3k1dB6Jurs74uKgsckaK.
+      - traefik.http.middlewares.redirectraefik.redirectregex.regex=^https://[^/]+/(.*)
+      - traefik.http.middlewares.redirectraefik.redirectregex.replacement=https://traefik.glarose.fr/$${1}
+      - traefik.http.middlewares.ratelimit.ratelimit.average=30
+      - traefik.http.middlewares.ratelimit.ratelimit.burst=50
+      - traefik.http.routers.api.rule=Host(`traefik.glarose.fr`)
+      - traefik.http.routers.api.entrypoints=https
+      - traefik.http.routers.api.priority=1
+      - traefik.http.routers.api.tls.certresolver=letsencrypt
+      - traefik.http.routers.api.tls.domains[0].main=glarose.fr
+      - traefik.http.routers.api.tls.domains[0].sans=*.glarose.fr
+      - traefik.http.routers.api.service=api@internal
+      - traefik.http.routers.api.middlewares=redirectraefik,ratelimit,auth
+
+    environment:
+      INFOMANIAK_ACCESS_TOKEN: IuL4X7fQOKc8j79oTbmk4Ur1k2343GGli5REIpREfkytQQXbOtsqZG5tPm-du7JoxvM95rEEg1xOfQU7
+
+networks:
+  traefik_lan:
+    external: true
+

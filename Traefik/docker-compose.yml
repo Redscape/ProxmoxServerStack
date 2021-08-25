@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    environment: 
+      - CLOUDFLARE_EMAIL=redscape@glarose.fr
+      - CLOUDFLARE_API_KEY=addb657ba019b3ffc1b0f7284d8328961ec83
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml:ro"
+      - "./acme.json:/acme.json"
+      - "./logs:/var/log"
+    networks:
+      - traefik_lan
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_lan"
+      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=http"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.auth.basicauth.users=traefik:$$apr1$$vwxvGVlE$$j3k1dB6Jurs74uKgsckaK."
+      - "traefik.http.middlewares.redirectraefik.redirectregex.regex=^https://[^/]+/(.*)"
+      - "traefik.http.middlewares.redirectraefik.redirectregex.replacement=https://traefik.glarose.fr/$${1}"
+      - "traefik.http.middlewares.ratelimit.ratelimit.average=30"
+      - "traefik.http.middlewares.ratelimit.ratelimit.burst=50"
+      - "traefik.http.routers.api.rule=Host(`traefik.glarose.fr`)"
+      - "traefik.http.routers.api.entrypoints=https"
+      - "traefik.http.routers.api.tls.certresolver=cloudflare"
+      - "traefik.http.routers.api.tls.domains[0].main=glarose.fr"
+      - "traefik.http.routers.api.tls.domains[0].sans=*.glarose.fr"
+      - "traefik.http.routers.api.service=api@internal"
+networks:
+  traefik_lan:
+    external: true
+

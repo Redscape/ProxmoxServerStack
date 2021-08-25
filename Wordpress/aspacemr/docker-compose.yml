@@ -1,0 +1,74 @@
+version: '3'
+
+services:
+  aspacemrdb:
+    image: mariadb:${MARIADBVERSION}
+    container_name: aspacemrdb
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQLROOTPASSWORD}
+      - MYSQL_DATABASE=${MYSQLDB}
+      - MYSQL_USER=${MYSQLUSER}
+      - MYSQL_PASSWORD=${MYSQLPASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - traefik_lan  
+
+  aspacemr_wp:
+    image: wordpress:${WPVERSION}
+    container_name: aspacemr_wp
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - WORDPRESS_DB_HOST=aspacemrdb
+      - WORDPRESS_DB_USER=${MYSQLUSER}
+      - WORDPRESS_DB_PASSWORD=${MYSQLPASSWORD}
+      - WORDPRESS_DB_NAME=${MYSQLDB}
+    volumes:
+      - /home/redscape/docker_wordpress/aspacemr/data:/var/www/html
+    depends_on: 
+      - aspacemrdb
+    networks:
+      - traefik_lan
+
+  aspacemr_nginx:  
+    image: nginx:${NGINXVERSION}
+    container_name: aspacemr_nginx
+    restart: unless-stopped
+    ports:
+      - "81:80"
+      - "444:443"
+    volumes:
+      - /home/redscape/docker_wordpress/aspacemr/data:/var/www/html
+      - nginxlogs:/var/log/nginx
+      - ./nginx:/etc/nginx
+    links:
+      - aspacemr_wp
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.aspacemr-http.entrypoints=http"
+      - "traefik.http.routers.aspacemr-http.rule=Host(`aspacemr.fr`)"
+      - "traefik.http.routers.aspacemr-http.middlewares=aspacemr-https@docker"
+      - "traefik.http.routers.aspacemr.entrypoints=https"
+      - "traefik.http.routers.aspacemr.rule=Host(`aspacemr.fr`)"
+      - "traefik.http.routers.aspacemr.middlewares=nextcloud-caldav@docker"
+      - "traefik.http.routers.aspacemr.tls=true"
+      - "traefik.http.routers.aspacemr.tls.certresolver=cloudflare"
+      - "traefik.docker.network=traefik_lan"
+      - "traefik.http.middlewares.aspacemr.headers.customrequestheaders.X-Forwarded-Proto=websecure"
+      - "traefik.http.middlewares.aspacemr.headers.accessControlAllowOrigin=*"
+      - "traefik.http.routers.aspacemr.service=aspacemr@file"
+      - "traefik.http.services.aspacemr.loadbalancer.servers.port=81"
+    networks:
+      - traefik_lan
+  
+volumes:
+  dbdata:
+  nginxlogs:
+  dataredis:
+
+networks:
+  traefik_lan:
+    external: true

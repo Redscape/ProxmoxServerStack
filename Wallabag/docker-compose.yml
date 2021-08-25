@@ -1,0 +1,70 @@
+version: '3.6'
+services:
+  wallabag:
+    image: wallabag/wallabag
+    environment:
+      - MYSQL_ROOT_PASSWORD=hzXGX6W3ktnEWw
+      - SYMFONY__ENV__DATABASE_DRIVER=pdo_mysql
+      - SYMFONY__ENV__DATABASE_HOST=dbwallabag
+      - SYMFONY__ENV__DATABASE_PORT=3306
+      - SYMFONY__ENV__DATABASE_NAME=wallabag
+      - SYMFONY__ENV__DATABASE_USER=wallabag
+      - SYMFONY__ENV__DATABASE_PASSWORD=hzXGX6W3ktnEWw
+      - SYMFONY__ENV__DATABASE_CHARSET=utf8mb4
+      - SYMFONY__ENV__FOSUSER_REGISTRATION=true
+      - SYMFONY__ENV__FOSUSER_CONFIRMATION=false
+      - SYMFONY__ENV__MAILER_HOST=127.0.0.1
+      - SYMFONY__ENV__MAILER_USER=~
+      - SYMFONY__ENV__MAILER_PASSWORD=~
+      - SYMFONY__ENV__FROM_EMAIL=redscape@glarose.fr
+      - SYMFONY__ENV__DOMAIN_NAME=https://wallabag.glarose.fr
+      - SYMFONY__ENV__SERVER_NAME="Wallabag Redscape"
+    volumes:
+      - /home/redscape/wallabag/data/images:/var/www/html/wallabag/web/assets/images
+      - /home/redscape/wallabag/db:/var/www/html/wallabag/data/db
+    healthcheck:
+      test: ["CMD", "wget" ,"--no-verbose", "--tries=1", "--spider", "http://localhost"]
+      interval: 1m
+      timeout: 3s
+    networks:
+      - traefik_lan
+    ports:
+      - "80:80"      
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wallabag-http.entrypoints=http"
+      - "traefik.http.routers.wallabag-http.rule=Host(`wallabag.fr`)"
+      - "traefik.http.routers.wallabag-http.middlewares=wallabag-https@docker"
+      - "traefik.http.routers.wallabag.entrypoints=https"
+      - "traefik.http.routers.wallabag.rule=Host(`wallabag.fr`)"
+      - "traefik.http.routers.wallabag.tls=true"
+      - "traefik.http.routers.wallabag.tls.certresolver=cloudflare"
+      - "traefik.docker.network=traefik_lan"
+      - "traefik.http.middlewares.wallabag.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.wallabag.headers.accessControlAllowOrigin=*"
+      - "traefik.http.routers.wallabag.service=wallabag@file"
+      - "traefik.http.services.wallabag.loadbalancer.servers.port=80"
+    depends_on:
+      - dbwallabag
+      - redis
+
+  dbwallabag:
+    image: mariadb:latest
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=hzXGX6W3ktnEWw
+    volumes:
+      - ./db:/var/lib/mysql
+    networks:
+      - traefik_lan
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 3s
+      
+networks:
+  traefik_lan:
+    external: true

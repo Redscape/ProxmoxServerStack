@@ -1,0 +1,95 @@
+version: '3.6'
+services:
+  nginxnextcloud:
+    image: nginx:${NGINXVERSION}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/redscape/nextcloud/data:/var/www/html
+      - datanginxnextcloudlogs:/var/log/nginx
+      - ./conf/nginx:/etc/nginx
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.nextcloud-caldav.redirectregex.permanent=true"
+      - "traefik.http.middlewares.nextcloud-caldav.redirectregex.regex=^https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.nextcloud-caldav.redirectregex.replacement=https://$${1}/remote.php/dav/"
+      - "traefik.http.middlewares.nextcloud-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.nextcloud-http.entrypoints=http"
+      - "traefik.http.routers.nextcloud-http.rule=Host(`nextcloud.glarose.fr`)"
+      - "traefik.http.routers.nextcloud-http.middlewares=nextcloud-https@docker"
+      - "traefik.http.routers.nextcloud.entrypoints=https"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.glarose.fr`)"
+      - "traefik.http.routers.nextcloud.middlewares=nextcloud-caldav@docker"
+      - "traefik.http.routers.nextcloud.tls=true"
+      - "traefik.http.routers.nextcloud.tls.certresolver=cloudflare"
+      - "traefik.docker.network=traefik_lan"
+      - "traefik.http.middlewares.nextcloud.headers.customrequestheaders.X-Forwarded-Proto=websecure"
+      - "traefik.http.middlewares.nextcloud.headers.accessControlAllowOrigin=*"
+      - "traefik.http.routers.nextcloud.service=nextcloud@file"
+      - "traefik.http.services.nextcloud.loadbalancer.servers.port=80"
+
+    networks:
+      - traefik
+      - traefik_lan
+
+  nextcloud:
+    image: nextcloud:${NEXTCLOUDVERSION}
+    restart: unless-stopped
+    container_name: nextcloud
+    volumes:
+      - /home/redscape/nextcloud/data:/var/www/html
+    environment:
+      MYSQL_HOST: sqlnextcloud
+      MYSQL_USER: ${MYSQLUSER}
+      MYSQL_PASSWORD: ${MYSQLPASSWORD}
+      MYSQL_DATABASE: ${MYSQLDB}
+      REDIS_HOST: redisnextcloud
+      NEXTCLOUD_TRUSTED_DOMAINS: nextcloud.glarose.fr
+      TRUSTED_PROXIES: 192.168.9.0/24
+    links:
+      - mariadb
+    networks:
+      - traefik
+      - traefik_lan
+    depends_on:
+      - mariadb
+
+  mariadb:
+    image: mariadb:${MARIADBVERSION}
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF
+    restart: unless-stopped
+    container_name: sqlnextcloud
+    volumes:
+      - datadbnextcloud:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQLROOTPASSWORD}
+      MYSQL_USER: ${MYSQLUSER}
+      MYSQL_PASSWORD: ${MYSQLPASSWORD}
+      MYSQL_DATABASE: ${MYSQLDB}
+    labels:
+      traefik.enable: false
+    networks: 
+      - traefik
+
+  redis:
+    image: redis:${REDISVERSION}
+    restart: always
+    container_name: redisnextcloud
+    volumes:
+      - dataredisnextcloud:/data
+    networks:
+      - traefik
+
+volumes:
+  datadbnextcloud:
+  dataredisnextcloud:
+  datanginxnextcloudlogs:
+  
+  
+networks:      
+  traefik:
+    external: true
+  traefik_lan:
+    external: true
