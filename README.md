@@ -10,3 +10,5 @@ This stack is composed of the following elements:
 - A VM containing Nextcloud.
 - A VM containing various services: Wallabag, Ghost (for my blog), Joplin Server (note taking-app), and soon, Bitwarden.
 - A future VM for Azuracast (audio streaming service).
+
+![](https://nextcloud.glarose.fr/s/Hc3MrJns3tXmc47/preview)
