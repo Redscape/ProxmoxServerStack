@@ -8,9 +8,10 @@ services:
       - "80:80"
       - "443:443"
       - "8080:8080"
+    env_file: .env
     environment: 
-      - CLOUDFLARE_EMAIL=redscape@glarose.fr
-      - CLOUDFLARE_API_KEY=addb657ba019b3ffc1b0f7284d8328961ec83
+      - CLOUDFLARE_EMAIL=${CLOUDFLARE_EMAIL}
+      - CLOUDFLARE_API_KEY=${CLOUDFLARE_API_KEY}
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
