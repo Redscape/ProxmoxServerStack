@@ -82,6 +82,34 @@ services:
     networks:
       - traefik
 
+  # onlyoffice-document-server:
+  #   container_name: onlyoffice-document-server
+  #   image: onlyoffice/documentserver:latest
+  #   restart: always
+  #   ports:
+  #     - "92:80"
+  #     - "4453:443"
+  #   volumes:
+  #     - /home/redscape/nextcloud/onlyoffice/document_data:/var/www/onlyoffice/Data
+  #     - /home/redscape/nextcloud/onlyoffice/document_log:/var/log/onlyoffice
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.onlyoffice-http.entrypoints=http"
+  #     - "traefik.http.routers.onlyoffice-http.rule=Host(`onlyoffice.glarose.fr`)"
+  #     - "traefik.http.routers.onlyoffice-http.middlewares=onlyoffice-https@docker"
+  #     - "traefik.http.routers.onlyoffice.entrypoints=https"
+  #     - "traefik.http.routers.onlyoffice.rule=Host(`nextcloud.glarose.fr`)"
+  #     - "traefik.http.routers.onlyoffice.tls=true"
+  #     - "traefik.http.routers.onlyoffice.tls.certresolver=cloudflare"
+  #     - "traefik.docker.network=traefik_lan"
+  #     - "traefik.http.middlewares.onlyoffice.headers.customrequestheaders.X-Forwarded-Proto=websecure"
+  #     - "traefik.http.middlewares.onlyoffice.headers.accessControlAllowOrigin=*"
+  #     - "traefik.http.routers.onlyoffice.service=onlyoffice@file"
+  #     - "traefik.http.services.onlyoffice.loadbalancer.servers.port=92"
+  #   networks:
+  #     - traefik
+  #     - traefik_lan
+
 volumes:
   datadbnextcloud:
   dataredisnextcloud:

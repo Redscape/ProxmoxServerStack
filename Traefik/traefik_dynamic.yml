@@ -46,23 +46,15 @@ http:
         - default-headers
       tls: {}
       service: allianceagency
-    minecraft:
-      rule: "Host(`minecraft.glarose.fr`)"
-      entryPoints:
-        - http
-      middlewares:
-        - default-headers
-      tls: {}
-      service: minecraft
-    wallabag:
-      rule: "Host(`wallabag.glarose.fr`)"
+    joplin:
+      rule: "Host(`joplin.glarose.fr`)"
       entryPoints:
         - https
       middlewares:
         - https-redirect
         - default-headers
       tls: {}
-      service: wallabag
+      service: joplin
     lesabyssales:
       rule: "Host(`lesabyssales.redscapemusic.com`)"
       entryPoints:
@@ -72,6 +64,25 @@ http:
         - default-headers
       tls: {}
       service: lesabyssales
+    onlyoffice:
+      rule: "Host(`onlyoffice.glarose.fr`)"
+      entryPoints:
+        - https
+      middlewares:
+        - https-redirect
+        - default-headers
+      tls: {}
+      service: onlyoffice
+    wallabag:
+      rule: "Host(`wallabag.glarose.fr`)"
+      entryPoints:
+        - https
+      middlewares:
+        - https-redirect
+        - default-headers
+      tls: {}
+      service: wallabag
+      
   #services
   services:
     nextcloud:
@@ -99,20 +110,25 @@ http:
         servers:
           - url: "http://192.168.9.20:83"
         passHostHeader: true
-    minecraft:
+    joplin:
       loadBalancer:
         servers:
-          - url: "http://192.168.9.40:25565"
-        passHostHeader: true
-    wallabag:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.9.60:80"
+          - url: "http://192.168.9.40:22300"
         passHostHeader: true
     lesabyssales:
       loadBalancer:
         servers:
           - url: "http://192.168.9.20:84"
+        passHostHeader: true
+    onlyoffice:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.9.40:92"
+        passHostHeader: true
+    wallabag:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.9.40:96"
         passHostHeader: true
   #middlewares
   middlewares:
