@@ -64,25 +64,6 @@ http:
         - default-headers
       tls: {}
       service: lesabyssales
-    onlyoffice:
-      rule: "Host(`onlyoffice.glarose.fr`)"
-      entryPoints:
-        - https
-      middlewares:
-        - https-redirect
-        - default-headers
-      tls: {}
-      service: onlyoffice
-    wallabag:
-      rule: "Host(`wallabag.glarose.fr`)"
-      entryPoints:
-        - https
-      middlewares:
-        - https-redirect
-        - default-headers
-      tls: {}
-      service: wallabag
-      
   #services
   services:
     nextcloud:
@@ -119,16 +100,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.9.20:84"
-        passHostHeader: true
-    onlyoffice:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.9.40:92"
-        passHostHeader: true
-    wallabag:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.9.40:96"
         passHostHeader: true
   #middlewares
   middlewares:
