@@ -64,6 +64,15 @@ http:
         - default-headers
       tls: {}
       service: lesabyssales
+    bloghugo:
+      rule: "Host(`blog.glarose.fr`)"
+      entryPoints:
+        - https
+      middlewares:
+        - https-redirect
+        - default-headers
+      tls: {}
+      service: bloghugo
   #services
   services:
     nextcloud:
@@ -100,6 +109,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.9.20:84"
+        passHostHeader: true
+    bloghugo:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.9.50:80"
         passHostHeader: true
   #middlewares
   middlewares:
